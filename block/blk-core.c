@@ -659,13 +659,13 @@ struct request_queue *blk_alloc_queue(gfp_t gfp_mask)
 }
 EXPORT_SYMBOL(blk_alloc_queue);
 
-int blk_queue_enter(struct request_queue *q, gfp_t gfp)
+int blk_queue_enter(struct request_queue *q, bool nowait)
 {
 	while (true) {
 		if (percpu_ref_tryget_live(&q->q_usage_counter))
 			return 0;
 
-		if (!gfpflags_allow_blocking(gfp))
+		if (nowait)
 			return -EBUSY;
 
 		wait_event(q->mq_freeze_wq,
@@ -1312,7 +1312,9 @@ static struct request *blk_old_get_request(struct request_queue *q, int rw,
 struct request *blk_get_request(struct request_queue *q, int rw, gfp_t gfp_mask)
 {
 	if (q->mq_ops)
-		return blk_mq_alloc_request(q, rw, gfp_mask, false);
+		return blk_mq_alloc_request(q, rw,
+			(gfp_mask & __GFP_DIRECT_RECLAIM) ?
+				0 : BLK_MQ_REQ_NOWAIT);
 	else
 		return blk_old_get_request(q, rw, gfp_mask);
 }
@@ -2097,7 +2099,7 @@ blk_qc_t generic_make_request(struct bio *bio)
 	do {
 		struct request_queue *q = bdev_get_queue(bio->bi_bdev);
 
-		if (likely(blk_queue_enter(q, __GFP_DIRECT_RECLAIM) == 0)) {
+		if (likely(blk_queue_enter(q, false) == 0)) {
 			struct bio_list lower, same;
 
 			/* Create a fresh bio_list for all subordinate requests */
