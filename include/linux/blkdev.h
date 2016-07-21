@@ -901,7 +901,8 @@ static inline unsigned int blk_max_size_offset(struct request_queue *q,
 			(offset & (q->limits.chunk_sectors - 1))));
 }
 
-static inline unsigned int blk_rq_get_max_sectors(struct request *rq)
+static inline unsigned int blk_rq_get_max_sectors(struct request *rq,
+						  sector_t offset)
 {
 	struct request_queue *q = rq->q;
 
@@ -911,7 +912,7 @@ static inline unsigned int blk_rq_get_max_sectors(struct request *rq)
 	if (!q->limits.chunk_sectors || (rq->cmd_flags & REQ_DISCARD))
 		return blk_queue_get_max_sectors(q, rq->cmd_flags);
 
-	return min(blk_max_size_offset(q, blk_rq_pos(rq)),
+	return min(blk_max_size_offset(q, offset),
 			blk_queue_get_max_sectors(q, rq->cmd_flags));
 }
 
