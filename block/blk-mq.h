@@ -50,6 +50,12 @@ void blk_mq_disable_hotplug(void);
 extern unsigned int *blk_mq_make_queue_map(struct blk_mq_tag_set *set);
 extern int blk_mq_hw_queue_to_node(unsigned int *map, unsigned int);
 
+static inline struct blk_mq_hw_ctx *blk_mq_map_queue(struct request_queue *q,
+		int cpu)
+{
+	return q->queue_hw_ctx[q->mq_map[cpu]];
+}
+
 /*
  * sysfs helpers
  */

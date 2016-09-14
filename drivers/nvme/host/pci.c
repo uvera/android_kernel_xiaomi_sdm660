@@ -1685,7 +1685,6 @@ static int nvme_shutdown_ctrl(struct nvme_dev *dev)
 
 static struct blk_mq_ops nvme_mq_admin_ops = {
 	.queue_rq	= nvme_queue_rq,
-	.map_queue	= blk_mq_map_queue,
 	.init_hctx	= nvme_admin_init_hctx,
 	.exit_hctx      = nvme_admin_exit_hctx,
 	.init_request	= nvme_admin_init_request,
@@ -1694,7 +1693,6 @@ static struct blk_mq_ops nvme_mq_admin_ops = {
 
 static struct blk_mq_ops nvme_mq_ops = {
 	.queue_rq	= nvme_queue_rq,
-	.map_queue	= blk_mq_map_queue,
 	.init_hctx	= nvme_init_hctx,
 	.init_request	= nvme_init_request,
 	.timeout	= nvme_timeout,

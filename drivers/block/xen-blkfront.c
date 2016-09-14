@@ -776,7 +776,6 @@ out_busy:
 
 static struct blk_mq_ops blkfront_mq_ops = {
 	.queue_rq = blkif_queue_rq,
-	.map_queue = blk_mq_map_queue,
 };
 
 static int xlvbd_init_blk_queue(struct gendisk *gd, u16 sector_size,
