@@ -1162,18 +1162,6 @@ static struct request *blk_mq_map_request(struct request_queue *q,
 	trace_block_getrq(q, bio, rw);
 	blk_mq_set_alloc_data(&alloc_data, q, BLK_MQ_REQ_NOWAIT, ctx, hctx);
 	rq = __blk_mq_alloc_request(&alloc_data, rw);
-	if (unlikely(!rq)) {
-		blk_mq_run_hw_queue(hctx, false);
-		blk_mq_put_ctx(ctx);
-		trace_block_sleeprq(q, bio, rw);
-
-		ctx = blk_mq_get_ctx(q);
-		hctx = blk_mq_map_queue(q, ctx->cpu);
-		blk_mq_set_alloc_data(&alloc_data, q, 0, ctx, hctx);
-		rq = __blk_mq_alloc_request(&alloc_data, rw);
-		ctx = alloc_data.ctx;
-		hctx = alloc_data.hctx;
-	}
 
 	hctx->queued++;
 	data->hctx = hctx;
