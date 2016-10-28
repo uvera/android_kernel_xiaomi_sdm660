@@ -1137,20 +1137,14 @@ insert_rq:
 	}
 }
 
-struct blk_map_ctx {
-	struct blk_mq_hw_ctx *hctx;
-	struct blk_mq_ctx *ctx;
-};
-
 static struct request *blk_mq_map_request(struct request_queue *q,
 					  struct bio *bio,
-					  struct blk_map_ctx *data)
+					  struct blk_mq_alloc_data *data)
 {
 	struct blk_mq_hw_ctx *hctx;
 	struct blk_mq_ctx *ctx;
 	struct request *rq;
 	int rw = bio_data_dir(bio);
-	struct blk_mq_alloc_data alloc_data;
 
 	blk_queue_enter_live(q);
 	ctx = blk_mq_get_ctx(q);
@@ -1160,11 +1154,9 @@ static struct request *blk_mq_map_request(struct request_queue *q,
 		rw |= REQ_SYNC;
 
 	trace_block_getrq(q, bio, rw);
-	blk_mq_set_alloc_data(&alloc_data, q, BLK_MQ_REQ_NOWAIT, ctx, hctx);
-	rq = __blk_mq_alloc_request(&alloc_data, rw);
+	blk_mq_set_alloc_data(data, q, BLK_MQ_REQ_NOWAIT, ctx, hctx);
+	rq = __blk_mq_alloc_request(data, rw);
 
-	data->hctx = alloc_data.hctx;
-	data->ctx = alloc_data.ctx;
 	data->hctx->queued++;
 	return rq;
 }
@@ -1213,7 +1205,7 @@ static blk_qc_t blk_mq_make_request(struct request_queue *q, struct bio *bio)
 {
 	const int is_sync = rw_is_sync(bio->bi_rw);
 	const int is_flush_fua = bio->bi_rw & (REQ_FLUSH | REQ_FUA);
-	struct blk_map_ctx data;
+	struct blk_mq_alloc_data data;
 	struct request *rq;
 	unsigned int request_count = 0;
 	struct blk_plug *plug;
@@ -1309,7 +1301,7 @@ static blk_qc_t blk_sq_make_request(struct request_queue *q, struct bio *bio)
 	const int is_flush_fua = bio->bi_rw & (REQ_FLUSH | REQ_FUA);
 	struct blk_plug *plug;
 	unsigned int request_count = 0;
-	struct blk_map_ctx data;
+	struct blk_mq_alloc_data data;
 	struct request *rq;
 	blk_qc_t cookie;
 
