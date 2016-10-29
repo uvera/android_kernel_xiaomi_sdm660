@@ -1217,8 +1217,7 @@ static void dm_requeue_original_request(struct mapped_device *md,
 	if (!rq->q->mq_ops)
 		old_requeue_request(rq);
 	else {
-		blk_mq_requeue_request(rq);
-		blk_mq_kick_requeue_list(rq->q);
+		blk_mq_requeue_request(rq, true);
 	}
 
 	rq_completed(md, rw, false);
