@@ -1726,6 +1726,7 @@ static int blkif_recover(struct blkfront_info *info)
 		blk_mq_requeue_request(req);
 	}
 	spin_unlock_irq(&info->io_lock);
+	blk_mq_start_stopped_hw_queues(info->rq, true);
 	blk_mq_kick_requeue_list(info->rq);
 
 	while ((bio = bio_list_pop(&bio_list)) != NULL) {
