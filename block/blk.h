@@ -120,6 +120,7 @@ static inline void blk_update_perf_stats(struct bio *bio)
 enum rq_atomic_flags {
 	REQ_ATOM_COMPLETE = 0,
 	REQ_ATOM_STARTED,
+	REQ_ATOM_POLL_SLEPT,
 };
 
 /*
