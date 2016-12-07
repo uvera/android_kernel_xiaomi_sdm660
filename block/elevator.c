@@ -276,14 +276,14 @@ static inline void __elv_rqhash_del(struct request *rq)
 	rq->cmd_flags &= ~REQ_HASHED;
 }
 
-static void elv_rqhash_del(struct request_queue *q, struct request *rq)
+void elv_rqhash_del(struct request_queue *q, struct request *rq)
 {
 	if (ELV_ON_HASH(rq))
 		__elv_rqhash_del(rq);
 }
 EXPORT_SYMBOL_GPL(elv_rqhash_del);
 
-static void elv_rqhash_add(struct request_queue *q, struct request *rq)
+void elv_rqhash_add(struct request_queue *q, struct request *rq)
 {
 	struct elevator_queue *e = q->elevator;
 
@@ -293,13 +293,13 @@ static void elv_rqhash_add(struct request_queue *q, struct request *rq)
 }
 EXPORT_SYMBOL_GPL(elv_rqhash_add);
 
-static void elv_rqhash_reposition(struct request_queue *q, struct request *rq)
+void elv_rqhash_reposition(struct request_queue *q, struct request *rq)
 {
 	__elv_rqhash_del(rq);
 	elv_rqhash_add(q, rq);
 }
 
-static struct request *elv_rqhash_find(struct request_queue *q, sector_t offset)
+struct request *elv_rqhash_find(struct request_queue *q, sector_t offset)
 {
 	struct elevator_queue *e = q->elevator;
 	struct hlist_node *next;
