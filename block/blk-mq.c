@@ -826,35 +826,13 @@ static bool reorder_tags_to_front(struct list_head *list)
  * of IO. In particular, we'd like FIFO behaviour on handling existing
  * items on the hctx->dispatch list. Ignore that for now.
  */
-static void blk_mq_process_rq_list(struct blk_mq_hw_ctx *hctx)
+bool blk_mq_dispatch_rq_list(struct blk_mq_hw_ctx *hctx, struct list_head *list)
 {
 	struct request_queue *q = hctx->queue;
 	struct request *rq;
-	LIST_HEAD(rq_list);
 	LIST_HEAD(driver_list);
 	struct list_head *dptr;
-	int queued;
-
-	if (unlikely(blk_mq_hctx_stopped(hctx)))
-		return;
-
-	hctx->run++;
-
-	/*
-	 * Touch any software queue that has pending entries.
-	 */
-	blk_mq_flush_busy_ctxs(hctx, &rq_list);
-
-	/*
-	 * If we have previous entries on our dispatch list, grab them
-	 * and stuff them at the front for more fair dispatch.
-	 */
-	if (!list_empty_careful(&hctx->dispatch)) {
-		spin_lock(&hctx->lock);
-		if (!list_empty(&hctx->dispatch))
-			list_splice_init(&hctx->dispatch, &rq_list);
-		spin_unlock(&hctx->lock);
-	}
+	int queued, ret = BLK_MQ_RQ_QUEUE_OK;
 
 	/*
 	 * Start off with dptr being NULL, so we start the first request
@@ -866,13 +844,12 @@ static void blk_mq_process_rq_list(struct blk_mq_hw_ctx *hctx)
 	 * Now process all the entries, sending them to the driver.
 	 */
 	queued = 0;
-	while (!list_empty(&rq_list)) {
+	while (!list_empty(list)) {
 		struct blk_mq_queue_data bd;
-		int ret;
 
-		rq = list_first_entry(&rq_list, struct request, queuelist);
+		rq = list_first_entry(list, struct request, queuelist);
 		if (!blk_mq_get_driver_tag(rq, &hctx, false)) {
-			if (!queued && reorder_tags_to_front(&rq_list))
+			if (!queued && reorder_tags_to_front(list))
 				continue;
 			blk_mq_sched_mark_restart(hctx);
 			break;
@@ -881,7 +858,7 @@ static void blk_mq_process_rq_list(struct blk_mq_hw_ctx *hctx)
 
 		bd.rq = rq;
 		bd.list = dptr;
-		bd.last = list_empty(&rq_list);
+		bd.last = list_empty(list);
 
 		ret = q->mq_ops->queue_rq(hctx, &bd);
 		switch (ret) {
@@ -889,7 +866,7 @@ static void blk_mq_process_rq_list(struct blk_mq_hw_ctx *hctx)
 			queued++;
 			break;
 		case BLK_MQ_RQ_QUEUE_BUSY:
-			list_add(&rq->queuelist, &rq_list);
+			list_add(&rq->queuelist, list);
 			__blk_mq_requeue_request(rq);
 			break;
 		default:
@@ -907,7 +884,7 @@ static void blk_mq_process_rq_list(struct blk_mq_hw_ctx *hctx)
 		 * We've done the first request. If we have more than 1
 		 * left in the list, set dptr to defer issue.
 		 */
-		if (!dptr && rq_list.next != rq_list.prev)
+		if (!dptr && list->next != list->prev)
 			dptr = &driver_list;
 	}
 
@@ -917,10 +894,11 @@ static void blk_mq_process_rq_list(struct blk_mq_hw_ctx *hctx)
 	 * Any items that need requeuing? Stuff them into hctx->dispatch,
 	 * that is where we will continue on next queue run.
 	 */
-	if (!list_empty(&rq_list)) {
+	if (!list_empty(list)) {
 		spin_lock(&hctx->lock);
-		list_splice(&rq_list, &hctx->dispatch);
+		list_splice(list, &hctx->dispatch);
 		spin_unlock(&hctx->lock);
+
 		/*
 		 * the queue is expected stopped with BLK_MQ_RQ_QUEUE_BUSY, but
 		 * it's possible the queue is stopped and restarted again
@@ -936,6 +914,43 @@ static void blk_mq_process_rq_list(struct blk_mq_hw_ctx *hctx)
 		if (!blk_mq_sched_needs_restart(hctx))
 			blk_mq_run_hw_queue(hctx, true);
 	}
+
+	return ret != BLK_MQ_RQ_QUEUE_BUSY;
+}
+
+/*
+ * Run this hardware queue, pulling any software queues mapped to it in.
+ * Note that this function currently has various problems around ordering
+ * of IO. In particular, we'd like FIFO behaviour on handling existing
+ * items on the hctx->dispatch list. Ignore that for now.
+ */
+static void blk_mq_process_rq_list(struct blk_mq_hw_ctx *hctx)
+{
+	LIST_HEAD(rq_list);
+	LIST_HEAD(driver_list);
+
+	if (unlikely(blk_mq_hctx_stopped(hctx)))
+		return;
+
+	hctx->run++;
+
+	/*
+	 * Touch any software queue that has pending entries.
+	 */
+	flush_busy_ctxs(hctx, &rq_list);
+
+	/*
+	 * If we have previous entries on our dispatch list, grab them
+	 * and stuff them at the front for more fair dispatch.
+	 */
+	if (!list_empty_careful(&hctx->dispatch)) {
+		spin_lock(&hctx->lock);
+		if (!list_empty(&hctx->dispatch))
+			list_splice_init(&hctx->dispatch, &rq_list);
+		spin_unlock(&hctx->lock);
+	}
+
+	blk_mq_dispatch_rq_list(hctx, &rq_list);
 }
 
 static void __blk_mq_run_hw_queue(struct blk_mq_hw_ctx *hctx)
