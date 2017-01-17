@@ -272,6 +272,7 @@ void blk_queue_end_tag(struct request_queue *q, struct request *rq)
 	list_del_init(&rq->queuelist);
 	rq->cmd_flags &= ~REQ_QUEUED;
 	rq->tag = -1;
+	rq->internal_tag = -1;
 
 	if (unlikely(bqt->tag_index[tag] == NULL))
 		printk(KERN_ERR "%s: tag %d is missing\n",

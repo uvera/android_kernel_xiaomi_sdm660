@@ -103,6 +103,7 @@ struct request {
 
 	/* the following two fields are internal, NEVER access directly */
 	unsigned int __data_len;	/* total data len */
+	int tag;
 	sector_t __sector;		/* sector cursor */
 
 	struct bio *bio;
@@ -167,9 +168,10 @@ struct request {
 
 	unsigned short ioprio;
 
+	int internal_tag;
+
 	void *special;		/* opaque pointer available for LLD use */
 
-	int tag;
 	int errors;
 
 	/*
