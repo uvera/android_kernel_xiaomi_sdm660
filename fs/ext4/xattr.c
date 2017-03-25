@@ -600,6 +600,7 @@ ext4_xattr_release_block(handle_t *handle, struct inode *inode,
 			}
 		}
 
+		ext4_xattr_block_csum_set(inode, bh);
 		/*
 		 * Beware of this ugliness: Releasing of xattr block references
 		 * from different inodes can race and so we have to protect
