@@ -220,7 +220,7 @@ void dwc3_trace(void (*trace)(struct va_format *), const char *fmt, ...);
 static inline void dwc3_trace(void (*trace)(struct va_format *), const char *fmt, ...) {}
 #endif
 
-#ifdef CONFIG_DEBUG_FS
+#ifdef CONFIG_USB_DWC3_DEBUG_FS
 extern void dbg_event(u8, const char*, int);
 extern void dbg_print(u8, const char*, int, const char*);
 extern void dbg_done(u8, const u32, int);
