@@ -50,6 +50,7 @@
 			device_type = "cpu";
 			compatible = "arm,armv8";
 			reg = <0x0 0x0>;
+                        clock-frequency = <1843200000>;
 			enable-method = "psci";
 			capacity-dmips-mhz = <1024>;
 			sched-energy-costs = <&CPU_COST_0 &CLUSTER_COST_0>;
@@ -81,6 +82,7 @@
 			device_type = "cpu";
 			compatible = "arm,armv8";
 			reg = <0x0 0x1>;
+                        clock-frequency = <1843200000>;
 			enable-method = "psci";
 			capacity-dmips-mhz = <1024>;
 			sched-energy-costs = <&CPU_COST_0 &CLUSTER_COST_0>;
@@ -106,6 +108,7 @@
 			device_type = "cpu";
 			compatible = "arm,armv8";
 			reg = <0x0 0x2>;
+                        clock-frequency = <1843200000>;
 			enable-method = "psci";
 			capacity-dmips-mhz = <1024>;
 			sched-energy-costs = <&CPU_COST_0 &CLUSTER_COST_0>;
@@ -131,6 +134,7 @@
 			device_type = "cpu";
 			compatible = "arm,armv8";
 			reg = <0x0 0x3>;
+                        clock-frequency = <1843200000>;
 			enable-method = "psci";
 			capacity-dmips-mhz = <1024>;
 			sched-energy-costs = <&CPU_COST_0 &CLUSTER_COST_0>;
@@ -156,6 +160,7 @@
 			device_type = "cpu";
 			compatible = "arm,armv8";
 			reg = <0x0 0x100>;
+                        clock-frequency = <2208000000>;
 			enable-method = "psci";
 			capacity-dmips-mhz = <1638>;
 			sched-energy-costs = <&CPU_COST_1 &CLUSTER_COST_1>;
@@ -185,6 +190,7 @@
 			device_type = "cpu";
 			compatible = "arm,armv8";
 			reg = <0x0 0x101>;
+                        clock-frequency = <2208000000>;
 			enable-method = "psci";
 			capacity-dmips-mhz = <1638>;
 			sched-energy-costs = <&CPU_COST_1 &CLUSTER_COST_1>;
@@ -210,6 +216,7 @@
 			device_type = "cpu";
 			compatible = "arm,armv8";
 			reg = <0x0 0x102>;
+                        clock-frequency = <2208000000>;
 			enable-method = "psci";
 			capacity-dmips-mhz = <1638>;
 			sched-energy-costs = <&CPU_COST_1 &CLUSTER_COST_1>;
@@ -235,6 +242,7 @@
 			device_type = "cpu";
 			compatible = "arm,armv8";
 			reg = <0x0 0x103>;
+                        clock-frequency = <2208000000>;
 			enable-method = "psci";
 			capacity-dmips-mhz = <1638>;
 			sched-energy-costs = <&CPU_COST_1 &CLUSTER_COST_1>;
