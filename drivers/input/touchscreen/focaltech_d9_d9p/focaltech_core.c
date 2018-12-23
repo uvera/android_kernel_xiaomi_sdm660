@@ -41,6 +41,7 @@
 #include <linux/proc_fs.h>
 
 #include "focaltech_i2c.c"
+#include "focaltech_gesture.c"
 
 #if FTS_LOCK_DOWN_INFO_EN
 char tp_lockdown_info[30];
