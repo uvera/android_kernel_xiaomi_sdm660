@@ -1,5 +1,7 @@
 #include "jason-sdm660-mdss-panels.dtsi"
 #include "jason-camera-sensor.dtsi"
+/* Disable SMP2P Remote Debug for production */
+#include "../msm-rdbg-disable.dtsi"
 
 &pm660_charger {
 	qcom,usb-icl-ua = <2800000>;
