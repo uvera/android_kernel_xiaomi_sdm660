@@ -8752,7 +8752,6 @@ static uint8_t *convert_level_to_string(uint32_t level)
 }
 #endif
 
-
 /**
  * wlan_hdd_display_tx_rx_histogram() - display tx rx histogram
  * @hdd_ctx: hdd context
