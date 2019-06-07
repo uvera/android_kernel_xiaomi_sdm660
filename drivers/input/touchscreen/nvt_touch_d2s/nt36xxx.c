@@ -1132,7 +1132,9 @@ static irqreturn_t nvt_ts_irq_handler(int32_t irq, void *dev_id)
 	}
 #endif
 
+	pm_qos_update_request(&ts->pm_qos_req, 100);
 	queue_work(nvt_wq, &ts->nvt_work);
+	pm_qos_update_request(&ts->pm_qos_req, PM_QOS_DEFAULT_VALUE);
 
 	return IRQ_HANDLED;
 }
@@ -1379,6 +1381,9 @@ static int32_t nvt_ts_probe(struct i2c_client *client, const struct i2c_device_i
 	}
 
 
+	pm_qos_add_request(&ts->pm_qos_req, PM_QOS_CPU_DMA_LATENCY,
+			PM_QOS_DEFAULT_VALUE);
+
 	client->irq = gpio_to_irq(ts->irq_gpio);
 	if (client->irq) {
 		NVT_LOG("int_trigger_type=%d\n", ts->int_trigger_type);
@@ -1473,6 +1478,7 @@ err_register_early_suspend_failed:
 #if (NVT_TOUCH_PROC || NVT_TOUCH_EXT_PROC || NVT_TOUCH_MP)
 err_init_NVT_ts:
 #endif
+	pm_qos_remove_request(&ts->pm_qos_req);
 	free_irq(client->irq, ts);
 #if BOOT_UPDATE_FIRMWARE
 err_create_nvt_fwu_wq_failed:
@@ -1513,6 +1519,8 @@ static int32_t nvt_ts_remove(struct i2c_client *client)
 	mutex_destroy(&ts->lock);
 
 	NVT_LOG("Removing driver...\n");
+
+	pm_qos_remove_request(&ts->pm_qos_req);
 
 	free_irq(client->irq, ts);
 	input_unregister_device(ts->input_dev);
