@@ -303,8 +303,14 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 
 CCACHE := $(shell which ccache)
 
+ifdef KERNEL_USE_CCACHE
 HOSTCC       = $(CCACHE) gcc
 HOSTCXX      = $(CCACHE) g++
+$(info # BUILDING WITH CCACHE)
+else
+HOSTCC       = gcc
+HOSTCXX      = g++
+endif
 HOSTCFLAGS   := -Wall -Wmissing-prototypes -Wstrict-prototypes -O2 -fomit-frame-pointer -std=gnu89
 HOSTCXXFLAGS = -O2
 
@@ -345,7 +351,11 @@ include scripts/Kbuild.include
 # Make variables (CC, etc...)
 AS		= $(CROSS_COMPILE)as
 LD		= $(CROSS_COMPILE)ld
+ifdef KERNEL_USE_CCACHE
 CC		= $(CCACHE) $(CROSS_COMPILE)gcc
+else
+CC		= $(CROSS_COMPILE)gcc
+endif
 CPP		= $(CC) -E
 AR		= $(CROSS_COMPILE)ar
 NM		= $(CROSS_COMPILE)nm
