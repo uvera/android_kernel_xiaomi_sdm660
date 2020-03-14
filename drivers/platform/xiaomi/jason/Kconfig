@@ -1,0 +1,5 @@
+config MACH_XIAOMI_JASON_FLASHLIGHT
+    bool "Flashlight fix for jason"
+    depends on MACH_XIAOMI_JASON
+    help
+      Flashlight fix on MIUI for Xiaomi Jason
