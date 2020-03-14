@@ -58,3 +58,7 @@ menu "Xiaomi board selection"
 		  Support for Xiaomi MI 6X variant
 
 endmenu
+
+if MACH_XIAOMI_JASON
+source "drivers/platform/xiaomi/jason/Kconfig"
+endif
