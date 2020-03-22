@@ -26,12 +26,6 @@ SCHED_FEAT(NEXT_BUDDY, false)
 SCHED_FEAT(LAST_BUDDY, true)
 
 /*
- * skip buddy i.e task called yield() is always skipped and the
- * next entity is selected to run irrespective of the vruntime
- */
-SCHED_FEAT(STRICT_SKIP_BUDDY, true)
-
-/*
  * Consider buddies to be cache hot, decreases the likelyness of a
  * cache buddy being migrated away, increases cache locality.
  */
@@ -57,13 +51,6 @@ SCHED_FEAT(NONTASK_CAPACITY, true)
  */
 SCHED_FEAT(TTWU_QUEUE, false)
 
-/*
- * Issue a WARN when we do multiple update_rq_clock() calls
- * in a single rq->lock section. Default disabled because the
- * annotations are not complete.
- */
-SCHED_FEAT(WARN_DOUBLE_CLOCK, false)
-
 #ifdef HAVE_RT_PUSH_IPI
 /*
  * In order to avoid a thundering herd attack of CPUs that are
@@ -81,11 +68,6 @@ SCHED_FEAT(FORCE_SD_OVERLAP, false)
 SCHED_FEAT(RT_RUNTIME_SHARE, true)
 SCHED_FEAT(LB_MIN, false)
 SCHED_FEAT(ATTACH_AGE_LOAD, true)
-
-/*
- * UtilEstimation. Use estimated CPU utilization.
- */
-SCHED_FEAT(UTIL_EST, true)
 
 /*
  * Energy aware scheduling. Use platform energy model to guide scheduling
