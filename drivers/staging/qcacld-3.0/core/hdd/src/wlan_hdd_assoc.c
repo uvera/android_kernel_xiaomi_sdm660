@@ -5924,8 +5924,8 @@ int hdd_set_genie_to_csr(hdd_adapter_t *pAdapter, eCsrAuthType *RSNAuthType)
 {
 	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	uint32_t status = 0;
-	eCsrEncryptionType RSNEncryptType;
-	eCsrEncryptionType mcRSNEncryptType;
+	eCsrEncryptionType RSNEncryptType = eCSR_ENCRYPT_TYPE_NONE;
+	eCsrEncryptionType mcRSNEncryptType = eCSR_ENCRYPT_TYPE_NONE;
 	hdd_context_t *hdd_ctx;
 #ifdef WLAN_FEATURE_11W
 	uint8_t RSNMfpRequired = 0;
