@@ -308,7 +308,6 @@ CCACHE := $(shell which ccache)
 ifdef KERNEL_USE_CCACHE
 HOSTCC       = $(CCACHE) gcc
 HOSTCXX      = $(CCACHE) g++
-$(info # BUILDING WITH CCACHE)
 else
 HOSTCC       = gcc
 HOSTCXX      = g++
