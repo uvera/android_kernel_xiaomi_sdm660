@@ -6341,11 +6341,6 @@ struct reciprocal_value schedtune_spc_rdiv;
 
 static int disable_boost = 0;
 
-void disable_schedtune_boost(int disable)
-{
-	disable_boost = disable;
-}
-
 static long
 schedtune_margin(unsigned long signal, long boost)
 {
@@ -6415,6 +6410,15 @@ schedtune_task_margin(struct task_struct *task)
 }
 
 #endif /* CONFIG_SCHED_TUNE */
+
+#if defined(CONFIG_SCHED_TUNE) && defined(CONFIG_CGROUP_SCHEDTUNE)
+
+void disable_schedtune_boost(int disable)
+{
+	disable_boost = disable;
+}
+
+#endif
 
 unsigned long
 boosted_cpu_util(int cpu)
