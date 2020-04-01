@@ -17,6 +17,7 @@
 #ifdef CONFIG_MACH_MI
 #include <linux/firmware.h>
 #endif
+#include <linux/cpu_general_boost.h>
 #include "msm_sd.h"
 #include "msm_actuator.h"
 #include "msm_cci.h"
@@ -618,6 +619,8 @@ static int32_t msm_actuator_move_focus(
 #endif
 
 	CDBG("called, dir %d, num_steps %d\n", dir, num_steps);
+
+	cpu_general_boost_kick_max(100);
 
 	if (a_ctrl->step_position_table == NULL) {
 		pr_err("Step Position Table is NULL\n");
