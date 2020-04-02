@@ -131,3 +131,10 @@ config SECURITY_SELINUX_POLICYDB_VERSION_MAX_VALUE
 	  installed under /etc/selinux/$SELINUXTYPE/policy, where
 	  SELINUXTYPE is defined in your /etc/selinux/config.
 
+config SECURITY_SELINUX_FAKE_ENFORCING
+	bool "Fake enforcing toggle"
+	depends on SECURITY_SELINUX
+	default n
+	help
+	  Enabling this config, kernel fake reports enforcing to userspace
+
