@@ -13,7 +13,6 @@
 #include "blk-mq.h"
 #include "blk-mq-sched.h"
 #include "blk-mq-tag.h"
-#include "blk-wbt.h"
 
 void blk_mq_sched_free_hctx_data(struct request_queue *q,
 				 void (*exit)(struct blk_mq_hw_ctx *))
@@ -84,7 +83,7 @@ static void __blk_mq_sched_assign_ioc(struct request_queue *q,
 
 	rq->elv.icq = icq;
 	if (!blk_mq_sched_get_rq_priv(q, rq)) {
-		rq->rq_flags |= RQF_ELVPRIV;
+		rq->cmd_flags |= REQ_ELVPRIV;
 		get_io_context(icq->ioc);
 		return;
 	}
@@ -129,7 +128,7 @@ struct request *blk_mq_sched_get_request(struct request_queue *q,
 		if (!is_flush && e->type->ops.mq.get_request) {
 			rq = e->type->ops.mq.get_request(q, op, data);
 			if (rq)
-				rq->rq_flags |= RQF_QUEUED;
+				rq->cmd_flags |= REQ_QUEUED;
 		} else
 			rq = __blk_mq_alloc_request(data, op);
 	} else {
@@ -156,7 +155,7 @@ void blk_mq_sched_put_request(struct request *rq)
 	struct request_queue *q = rq->q;
 	struct elevator_queue *e = q->elevator;
 
-	if (rq->rq_flags & RQF_ELVPRIV) {
+	if (rq->cmd_flags & REQ_ELVPRIV) {
 		blk_mq_sched_put_rq_priv(rq->q, rq);
 		if (rq->elv.icq) {
 			put_io_context(rq->elv.icq->ioc);
@@ -164,7 +163,7 @@ void blk_mq_sched_put_request(struct request *rq)
 		}
 	}
 
-	if ((rq->rq_flags & RQF_QUEUED) && e && e->type->ops.mq.put_request)
+	if ((rq->cmd_flags & REQ_QUEUED) && e && e->type->ops.mq.put_request)
 		e->type->ops.mq.put_request(rq);
 	else
 		blk_mq_finish_request(rq);
@@ -285,7 +284,7 @@ EXPORT_SYMBOL_GPL(blk_mq_sched_request_inserted);
 bool blk_mq_sched_bypass_insert(struct blk_mq_hw_ctx *hctx, struct request *rq)
 {
 	if (rq->tag == -1) {
-		rq->rq_flags |= RQF_SORTED;
+		rq->cmd_flags |= REQ_SORTED;
 		return false;
 	}
 
