@@ -110,7 +110,7 @@ struct request *blk_mq_sched_get_request(struct request_queue *q,
 	struct blk_mq_hw_ctx *hctx;
 	struct blk_mq_ctx *ctx;
 	struct request *rq;
-	const bool is_flush = op & (REQ_PREFLUSH | REQ_FUA);
+	const bool is_flush = op & (REQ_FLUSH | REQ_FUA);
 
 	blk_queue_enter_live(q);
 	ctx = blk_mq_get_ctx(q);
