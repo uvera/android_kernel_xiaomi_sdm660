@@ -457,7 +457,7 @@ static int popp_trans2(struct kgsl_device *device, int level)
 {
 	struct kgsl_pwrctrl *pwr = &device->pwrctrl;
 	struct kgsl_pwrscale *psc = &device->pwrscale;
-	int __maybe_unused old_level = psc->popp_level;
+	int old_level = psc->popp_level;
 
 	if (!test_bit(POPP_ON, &psc->popp_state))
 		return level;
@@ -818,16 +818,12 @@ int kgsl_busmon_target(struct device *dev, unsigned long *freq, u32 flags)
 	}
 
 	b = pwr->bus_mod;
-	if (_check_fast_hint(bus_flag))
-		pwr->bus_mod++;
-	else if (_check_slow_hint(bus_flag))
-		pwr->bus_mod--;
-
-	/* trim calculated change to fit range */
-	if (pwr_level->bus_freq + pwr->bus_mod < pwr_level->bus_min)
-		pwr->bus_mod = -(pwr_level->bus_freq - pwr_level->bus_min);
-	else if (pwr_level->bus_freq + pwr->bus_mod > pwr_level->bus_max)
-		pwr->bus_mod = pwr_level->bus_max - pwr_level->bus_freq;
+	if (_check_fast_hint(bus_flag) &&
+		((pwr_level->bus_freq + pwr->bus_mod) < pwr_level->bus_max))
+			pwr->bus_mod++;
+	else if (_check_slow_hint(bus_flag) &&
+		((pwr_level->bus_freq + pwr->bus_mod) > pwr_level->bus_min))
+			pwr->bus_mod--;
 
 	/* Update bus vote if AB or IB is modified */
 	if ((pwr->bus_mod != b) || (pwr->bus_ab_mbytes != ab_mbytes)) {

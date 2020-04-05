@@ -144,9 +144,6 @@
 #define KGSL_END_OF_PROFILE_IDENTIFIER	0x2DEFADE2
 #define KGSL_PWRON_FIXUP_IDENTIFIER	0x2AFAFAFA
 
-/* Number of times to try loading of zap shader */
-#define ZAP_RETRY_MAX	5
-
 /* One cannot wait forever for the core to idle, so set an upper limit to the
  * amount of time to wait for the core to go idle
  */
@@ -257,29 +254,6 @@ struct adreno_busy_data {
 };
 
 /**
- * struct adreno_perfcounter_list_node - struct to store perfcounters
- * allocated by a process on a kgsl fd.
- * @groupid: groupid of the allocated perfcounter
- * @countable: countable assigned to the allocated perfcounter
- * @node: list node for perfcounter_list of a process
- */
-struct adreno_perfcounter_list_node {
-	unsigned int groupid;
-	unsigned int countable;
-	struct list_head node;
-};
-
-/**
- * struct adreno_device_private - Adreno private structure per fd
- * @dev_priv: the kgsl device private structure
- * @perfcounter_list: list of perfcounters used by the process
- */
-struct adreno_device_private {
-	struct kgsl_device_private dev_priv;
-	struct list_head perfcounter_list;
-};
-
-/**
  * struct adreno_gpu_core - A specific GPU core definition
  * @gpurev: Unique GPU revision identifier
  * @core: Match for the core version of the GPU
@@ -312,7 +286,6 @@ struct adreno_device_private {
  * @regfw_name: Filename for the register sequence firmware
  * @gpmu_tsens: ID for the temporature sensor used by the GPMU
  * @max_power: Max possible power draw of a core, units elephant tail hairs
- * @va_padding: Size to pad allocations to, zero if not required
  */
 struct adreno_gpu_core {
 	enum adreno_gpurev gpurev;
@@ -342,7 +315,6 @@ struct adreno_gpu_core {
 	const char *regfw_name;
 	unsigned int gpmu_tsens;
 	unsigned int max_power;
-	uint64_t va_padding;
 };
 
 /**
@@ -402,7 +374,6 @@ struct adreno_gpu_core {
  * @irq_storm_work: Worker to handle possible interrupt storms
  * @active_list: List to track active contexts
  * @active_list_lock: Lock to protect active_list
- * @zap_loaded: Used to track if zap was successfully loaded or not
  */
 struct adreno_device {
 	struct kgsl_device dev;    /* Must be first field in this struct */
@@ -468,7 +439,6 @@ struct adreno_device {
 
 	struct list_head active_list;
 	spinlock_t active_list_lock;
-	unsigned int zap_loaded;
 };
 
 /**
@@ -905,6 +875,8 @@ extern unsigned int *adreno_ft_regs;
 extern unsigned int adreno_ft_regs_num;
 extern unsigned int *adreno_ft_regs_val;
 
+extern struct adreno_gpudev adreno_a3xx_gpudev;
+extern struct adreno_gpudev adreno_a4xx_gpudev;
 extern struct adreno_gpudev adreno_a5xx_gpudev;
 
 extern int adreno_wake_nice;
@@ -917,11 +889,6 @@ long adreno_ioctl_helper(struct kgsl_device_private *dev_priv,
 		unsigned int cmd, unsigned long arg,
 		const struct kgsl_ioctl *cmds, int len);
 
-int a5xx_critical_packet_submit(struct adreno_device *adreno_dev,
-		struct adreno_ringbuffer *rb);
-int adreno_set_unsecured_mode(struct adreno_device *adreno_dev,
-		struct adreno_ringbuffer *rb);
-void adreno_spin_idle_debug(struct adreno_device *adreno_dev, const char *str);
 int adreno_spin_idle(struct adreno_device *device, unsigned int timeout);
 int adreno_idle(struct kgsl_device *device);
 bool adreno_isidle(struct kgsl_device *device);
@@ -1562,7 +1529,7 @@ static inline bool is_power_counter_overflow(struct adreno_device *adreno_dev,
 		return ret;
 	}
 	adreno_readreg(adreno_dev, ADRENO_REG_RBBM_PERFCTR_RBBM_0_HI, &val);
-	if (val > *perfctr_pwr_hi) {
+	if (val != *perfctr_pwr_hi) {
 		*perfctr_pwr_hi = val;
 		ret = true;
 	}
@@ -1577,17 +1544,14 @@ static inline unsigned int counter_delta(struct kgsl_device *device,
 	unsigned int ret = 0;
 	bool overflow = true;
 	static unsigned int perfctr_pwr_hi;
-	unsigned int prev_perfctr_pwr_hi = 0;
 
 	/* Read the value */
 	kgsl_regread(device, reg, &val);
 
 	if (adreno_is_a5xx(adreno_dev) && reg == adreno_getreg
-		(adreno_dev, ADRENO_REG_RBBM_PERFCTR_RBBM_0_LO)) {
-		prev_perfctr_pwr_hi = perfctr_pwr_hi;
+		(adreno_dev, ADRENO_REG_RBBM_PERFCTR_RBBM_0_LO))
 		overflow = is_power_counter_overflow(adreno_dev, reg,
 				*counter, &perfctr_pwr_hi);
-	}
 
 	/* Return 0 for the first read */
 	if (*counter != 0) {
@@ -1600,12 +1564,9 @@ static inline unsigned int counter_delta(struct kgsl_device *device,
 			 * Since KGSL got abnormal value from the counter,
 			 * We will drop the value from being accumulated.
 			 */
-			KGSL_DRV_ERR_RATELIMIT(device,
-				"Abnormal value:0x%llx (0x%llx) from perf counter : 0x%x\n",
-				val | ((uint64_t)perfctr_pwr_hi << 32),
-				*counter |
-					((uint64_t)prev_perfctr_pwr_hi << 32),
-				reg);
+			pr_warn_once("KGSL: Abnormal value :0x%x (0x%x) from perf counter : 0x%x\n",
+					val, *counter, reg);
+			return 0;
 		}
 	}
 
