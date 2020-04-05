@@ -1,4 +1,4 @@
-/* Copyright (c) 2002,2007-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2002,2007-2017, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -57,9 +57,6 @@ int kgsl_cache_range_op(struct kgsl_memdesc *memdesc,
 			uint64_t offset, uint64_t size,
 			unsigned int op);
 
-void kgsl_memdesc_init(struct kgsl_device *device,
-			struct kgsl_memdesc *memdesc, uint64_t flags);
-
 void kgsl_process_init_sysfs(struct kgsl_device *device,
 		struct kgsl_process_private *private);
 void kgsl_process_uninit_sysfs(struct kgsl_process_private *private);
@@ -75,10 +72,6 @@ void kgsl_get_memory_usage(char *str, size_t len, uint64_t memflags);
 
 int kgsl_sharedmem_page_alloc_user(struct kgsl_memdesc *memdesc,
 				uint64_t size);
-
-void kgsl_free_secure_page(struct page *page);
-
-struct page *kgsl_alloc_secure_page(void);
 
 #define MEMFLAGS(_flags, _mask, _shift) \
 	((unsigned int) (((_flags) & (_mask)) >> (_shift)))
@@ -265,8 +258,7 @@ kgsl_memdesc_use_cpu_map(const struct kgsl_memdesc *memdesc)
 static inline uint64_t
 kgsl_memdesc_footprint(const struct kgsl_memdesc *memdesc)
 {
-	return ALIGN(memdesc->size + kgsl_memdesc_guard_page_size(memdesc),
-		memdesc->pad_to);
+	return  memdesc->size + kgsl_memdesc_guard_page_size(memdesc);
 }
 
 /*
@@ -289,8 +281,8 @@ static inline int kgsl_allocate_global(struct kgsl_device *device,
 {
 	int ret;
 
-	kgsl_memdesc_init(device, memdesc, flags);
-	memdesc->priv |= priv;
+	memdesc->flags = flags;
+	memdesc->priv = priv;
 
 	if (((memdesc->priv & KGSL_MEMDESC_CONTIG) != 0) ||
 		(kgsl_mmu_get_mmutype(device) == KGSL_MMU_TYPE_NONE))
