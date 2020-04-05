@@ -59,6 +59,12 @@ menu "Xiaomi board selection"
 
 endmenu
 
+config MACH_XIAOMI_NEW_CAMERA
+	bool "Xiaomi new camera blobs"
+	depends on MACH_XIAOMI_SDM660
+	help
+	  Support for new camera blobs
+
 if MACH_XIAOMI_JASON
 source "drivers/platform/xiaomi/jason/Kconfig"
 endif
