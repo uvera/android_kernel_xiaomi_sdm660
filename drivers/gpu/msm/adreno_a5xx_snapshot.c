@@ -361,9 +361,9 @@ static const unsigned int a5xx_registers[] = {
 	0x04E0, 0x04F4, 0X04F8, 0x0529, 0x0531, 0x0533, 0x0540, 0x0555,
 	0xF400, 0xF400, 0xF800, 0xF807,
 	/* CP */
-	0x0800, 0x0803, 0x0806, 0x081A, 0x081F, 0x0841, 0x0860, 0x0860,
-	0x0880, 0x08A0, 0x0B00, 0x0B12, 0x0B15, 0X0B1C, 0X0B1E, 0x0B28,
-	0x0B78, 0x0B7F, 0x0BB0, 0x0BBD,
+	0x0800, 0x081A, 0x081F, 0x0841, 0x0860, 0x0860, 0x0880, 0x08A0,
+	0x0B00, 0x0B12, 0x0B15, 0X0B1C, 0X0B1E, 0x0B28, 0x0B78, 0x0B7F,
+	0x0BB0, 0x0BBD,
 	/* VSC */
 	0x0BC0, 0x0BC6, 0x0BD0, 0x0C53, 0x0C60, 0x0C61,
 	/* GRAS */
@@ -809,7 +809,6 @@ static void _a5xx_do_crashdump(struct kgsl_device *device)
 	crash_dump_valid = true;
 }
 
-#ifndef CONFIG_MACH_LONGCHEER
 static int get_hlsq_registers(struct kgsl_device *device,
 		const struct a5xx_hlsq_sp_tp_regs *regs, unsigned int *data)
 {
@@ -849,7 +848,6 @@ static size_t a5xx_snapshot_dump_hlsq_sp_tp_regs(struct kgsl_device *device,
 	/* Return the size of the section */
 	return (count * 8) + sizeof(*header);
 }
-#endif
 
 /*
  * a5xx_snapshot() - A5XX GPU snapshot function
@@ -899,11 +897,9 @@ void a5xx_snapshot(struct adreno_device *adreno_dev,
 	}
 
 
-#ifndef CONFIG_MACH_LONGCHEER
 	/* Dump SP TP HLSQ registers */
 	kgsl_snapshot_add_section(device, KGSL_SNAPSHOT_SECTION_REGS, snapshot,
 		a5xx_snapshot_dump_hlsq_sp_tp_regs, NULL);
-#endif
 
 	/* CP_PFP indexed registers */
 	kgsl_snapshot_indexed_registers(device, snapshot,
