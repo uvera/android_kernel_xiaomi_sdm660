@@ -1,4 +1,4 @@
-/* Copyright (c) 2002,2007-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2002,2007-2017 The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -341,7 +341,7 @@ int kgsl_allocate_user(struct kgsl_device *device,
 {
 	int ret;
 
-	kgsl_memdesc_init(device, memdesc, flags);
+	memdesc->flags = flags;
 
 	if (kgsl_mmu_get_mmutype(device) == KGSL_MMU_TYPE_NONE)
 		ret = kgsl_sharedmem_alloc_contig(device, memdesc, size);
@@ -406,39 +406,6 @@ done:
 	mutex_unlock(&kernel_map_global_lock);
 }
 
-static int kgsl_lock_sgt(struct sg_table *sgt)
-{
-	struct scatterlist *sg;
-	int dest_perms = PERM_READ | PERM_WRITE;
-	int source_vm = VMID_HLOS;
-	int dest_vm = VMID_CP_PIXEL;
-	int ret;
-	int i;
-
-	ret = hyp_assign_table(sgt, &source_vm, 1, &dest_vm, &dest_perms, 1);
-	if (!ret) {
-		/* Set private bit for each sg to indicate that its secured */
-		for_each_sg(sgt->sgl, sg, sgt->nents, i)
-			SetPagePrivate(sg_page(sg));
-	}
-	return ret;
-}
-
-static int kgsl_unlock_sgt(struct sg_table *sgt)
-{
-	int dest_perms = PERM_READ | PERM_WRITE | PERM_EXEC;
-	int source_vm = VMID_CP_PIXEL;
-	int dest_vm = VMID_HLOS;
-	int ret;
-	struct sg_page_iter sg_iter;
-
-	ret = hyp_assign_table(sgt, &source_vm, 1, &dest_vm, &dest_perms, 1);
-
-	for_each_sg_page(sgt->sgl, &sg_iter, sgt->nents, 0)
-		ClearPagePrivate(sg_page_iter_page(&sg_iter));
-	return ret;
-}
-
 static void kgsl_page_alloc_free(struct kgsl_memdesc *memdesc)
 {
 	kgsl_page_alloc_unmap_kernel(memdesc);
@@ -448,8 +415,12 @@ static void kgsl_page_alloc_free(struct kgsl_memdesc *memdesc)
 	/* Secure buffers need to be unlocked before being freed */
 	if (memdesc->priv & KGSL_MEMDESC_TZ_LOCKED) {
 		int ret;
+		int dest_perms = PERM_READ | PERM_WRITE | PERM_EXEC;
+		int source_vm = VMID_CP_PIXEL;
+		int dest_vm = VMID_HLOS;
 
-		ret = kgsl_unlock_sgt(memdesc->sgt);
+		ret = hyp_assign_table(memdesc->sgt, &source_vm, 1,
+					&dest_vm, &dest_perms, 1);
 		if (ret) {
 			pr_err("Secure buf unlock failed: gpuaddr: %llx size: %llx ret: %d\n",
 					memdesc->gpuaddr, memdesc->size, ret);
@@ -459,6 +430,15 @@ static void kgsl_page_alloc_free(struct kgsl_memdesc *memdesc)
 		atomic_long_sub(memdesc->size, &kgsl_driver.stats.secure);
 	} else {
 		atomic_long_sub(memdesc->size, &kgsl_driver.stats.page_alloc);
+	}
+
+	if (memdesc->priv & KGSL_MEMDESC_TZ_LOCKED) {
+		struct sg_page_iter sg_iter;
+
+		for_each_sg_page(memdesc->sgt->sgl, &sg_iter,
+					memdesc->sgt->nents, 0)
+			ClearPagePrivate(sg_page_iter_page(&sg_iter));
+
 	}
 
 	/* Free pages using the pages array for non secure paged memory */
@@ -715,37 +695,6 @@ int kgsl_cache_range_op(struct kgsl_memdesc *memdesc, uint64_t offset,
 }
 EXPORT_SYMBOL(kgsl_cache_range_op);
 
-void kgsl_memdesc_init(struct kgsl_device *device,
-			struct kgsl_memdesc *memdesc, uint64_t flags)
-{
-	struct kgsl_mmu *mmu = &device->mmu;
-	unsigned int align;
-
-	memset(memdesc, 0, sizeof(*memdesc));
-	/* Turn off SVM if the system doesn't support it */
-	if (!kgsl_mmu_use_cpu_map(mmu))
-		flags &= ~((uint64_t) KGSL_MEMFLAGS_USE_CPU_MAP);
-
-	/* Secure memory disables advanced addressing modes */
-	if (flags & KGSL_MEMFLAGS_SECURE)
-		flags &= ~((uint64_t) KGSL_MEMFLAGS_USE_CPU_MAP);
-
-	if (MMU_FEATURE(mmu, KGSL_MMU_NEED_GUARD_PAGE))
-		memdesc->priv |= KGSL_MEMDESC_GUARD_PAGE;
-
-	if (flags & KGSL_MEMFLAGS_SECURE)
-		memdesc->priv |= KGSL_MEMDESC_SECURE;
-
-	memdesc->flags = flags;
-	memdesc->pad_to = mmu->va_padding;
-	memdesc->dev = device->dev->parent;
-
-	align = max_t(unsigned int,
-		(memdesc->flags & KGSL_MEMALIGN_MASK) >> KGSL_MEMALIGN_SHIFT,
-		ilog2(PAGE_SIZE));
-	kgsl_memdesc_set_align(memdesc, align);
-}
-
 int
 kgsl_sharedmem_page_alloc_user(struct kgsl_memdesc *memdesc,
 			uint64_t size)
@@ -765,18 +714,6 @@ kgsl_sharedmem_page_alloc_user(struct kgsl_memdesc *memdesc,
 		return -EINVAL;
 
 	align = (memdesc->flags & KGSL_MEMALIGN_MASK) >> KGSL_MEMALIGN_SHIFT;
-
-	/*
-	 * As 1MB is the max supported page size, use the alignment
-	 * corresponding to 1MB page to make sure higher order pages
-	 * are used if possible for a given memory size. Also, we
-	 * don't need to update alignment in memdesc flags in case
-	 * higher order page is used, as memdesc flags represent the
-	 * virtual alignment specified by the user which is anyways
-	 * getting satisfied.
-	 */
-	if (align < ilog2(SZ_1M))
-		align = ilog2(SZ_1M);
 
 	page_size = kgsl_get_page_size(size, align);
 
@@ -855,6 +792,12 @@ kgsl_sharedmem_page_alloc_user(struct kgsl_memdesc *memdesc,
 
 	/* Call to the hypervisor to lock any secure buffer allocations */
 	if (memdesc->flags & KGSL_MEMFLAGS_SECURE) {
+		unsigned int i;
+		struct scatterlist *sg;
+		int dest_perms = PERM_READ | PERM_WRITE;
+		int source_vm = VMID_HLOS;
+		int dest_vm = VMID_CP_PIXEL;
+
 		memdesc->sgt = kmalloc(sizeof(struct sg_table), GFP_KERNEL);
 		if (memdesc->sgt == NULL) {
 			ret = -ENOMEM;
@@ -868,13 +811,18 @@ kgsl_sharedmem_page_alloc_user(struct kgsl_memdesc *memdesc,
 			goto done;
 		}
 
-		ret = kgsl_lock_sgt(memdesc->sgt);
+		ret = hyp_assign_table(memdesc->sgt, &source_vm, 1,
+					&dest_vm, &dest_perms, 1);
 		if (ret) {
 			sg_free_table(memdesc->sgt);
 			kfree(memdesc->sgt);
 			memdesc->sgt = NULL;
 			goto done;
 		}
+
+		/* Set private bit for each sg to indicate that its secured */
+		for_each_sg(memdesc->sgt->sgl, sg, memdesc->sgt->nents, i)
+			SetPagePrivate(sg_page(sg));
 
 		memdesc->priv |= KGSL_MEMDESC_TZ_LOCKED;
 
@@ -933,52 +881,10 @@ void kgsl_sharedmem_free(struct kgsl_memdesc *memdesc)
 
 	if (memdesc->pages)
 		kgsl_free(memdesc->pages);
+
+	memset(memdesc, 0, sizeof(*memdesc));
 }
 EXPORT_SYMBOL(kgsl_sharedmem_free);
-
-void kgsl_free_secure_page(struct page *page)
-{
-	struct sg_table sgt;
-	struct scatterlist sgl;
-
-	if (!page)
-		return;
-
-	sgt.sgl = &sgl;
-	sgt.nents = 1;
-	sgt.orig_nents = 1;
-	sg_init_table(&sgl, 1);
-	sg_set_page(&sgl, page, PAGE_SIZE, 0);
-
-	kgsl_unlock_sgt(&sgt);
-	__free_page(page);
-}
-
-struct page *kgsl_alloc_secure_page(void)
-{
-	struct page *page;
-	struct sg_table sgt;
-	struct scatterlist sgl;
-	int status;
-
-	page = alloc_page(GFP_KERNEL | __GFP_ZERO |
-			__GFP_NORETRY | __GFP_HIGHMEM);
-	if (!page)
-		return NULL;
-
-	sgt.sgl = &sgl;
-	sgt.nents = 1;
-	sgt.orig_nents = 1;
-	sg_init_table(&sgl, 1);
-	sg_set_page(&sgl, page, PAGE_SIZE, 0);
-
-	status = kgsl_lock_sgt(&sgt);
-	if (status) {
-		__free_page(page);
-		return NULL;
-	}
-	return page;
-}
 
 int
 kgsl_sharedmem_readl(const struct kgsl_memdesc *memdesc,
