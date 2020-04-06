@@ -335,17 +335,17 @@ void msm_vfe48_stats_cfg_ub(struct vfe_device *vfe_dev)
 		80, /* MSM_ISP_STATS_AEC_BG */
 	};
 #else
-    uint32_t ub_size[VFE47_NUM_STATS_TYPE] = {
-        16, /* MSM_ISP_STATS_HDR_BE */
-        16, /* MSM_ISP_STATS_BG */
-        16, /* MSM_ISP_STATS_BF */
-        16, /* MSM_ISP_STATS_HDR_BHIST */
-        16, /* MSM_ISP_STATS_RS */
-        16, /* MSM_ISP_STATS_CS */
-        16, /* MSM_ISP_STATS_IHIST */
-        16, /* MSM_ISP_STATS_BHIST */
-        16, /* MSM_ISP_STATS_AEC_BG */
-    };
+	uint32_t ub_size[VFE47_NUM_STATS_TYPE] = {
+		16, /* MSM_ISP_STATS_HDR_BE */
+		16, /* MSM_ISP_STATS_BG */
+		16, /* MSM_ISP_STATS_BF */
+		16, /* MSM_ISP_STATS_HDR_BHIST */
+		16, /* MSM_ISP_STATS_RS */
+		16, /* MSM_ISP_STATS_CS */
+		16, /* MSM_ISP_STATS_IHIST */
+		16, /* MSM_ISP_STATS_BHIST */
+		16, /* MSM_ISP_STATS_AEC_BG */
+	};
 #endif
 
 	stats_burst_len = VFE48_STATS_BURST_LEN;
