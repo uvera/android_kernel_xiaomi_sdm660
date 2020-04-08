@@ -215,9 +215,9 @@ dtb-$(CONFIG_ARCH_MSMHAMSTER) += msmhamster-rumi.dtb
 ifeq ($(CONFIG_MACH_XIAOMI_SDM660),y)
 ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)
 dtbo-$(CONFIG_MACH_XIAOMI_LAVENDER) += sdm660-mtp-lavender-overlay.dtbo
-sdm660-mtp-lavender-overlay.dtbo-base := sdm660-mtp-lavender.dtb
+sdm660-mtp-lavender-overlay.dtbo-base := sdm660-mtp-lavender.dtb sdm660-mtp-lavender-old-led.dtb
 else
-dtb-$(CONFIG_MACH_XIAOMI_LAVENDER) := sdm660-mtp-lavender.dtb
+dtb-$(CONFIG_MACH_XIAOMI_LAVENDER) := sdm660-mtp-lavender.dtb sdm660-mtp-lavender-old-led.dtb
 dtb-$(CONFIG_MACH_XIAOMI_JASON) := sdm660-mtp-jason.dtb sdm660-mtp-jason-treble.dtb
 dtb-$(CONFIG_MACH_XIAOMI_TULIP) := sdm636-mtp-tulip.dtb
 dtb-$(CONFIG_MACH_XIAOMI_WAYNE) := sdm660-mtp-wayne.dtb sdm660-mtp-jasmine.dtb
