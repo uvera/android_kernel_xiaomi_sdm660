@@ -21,7 +21,7 @@
 #include <linux/platform_device.h>
 #include <linux/iio/consumer.h>
 #include <linux/qpnp/qpnp-revid.h>
-#if defined(CONFIG_MACH_LONGCHEER) || defined(CONFIG_MACH_XIAOMI_JASON)
+#if defined(CONFIG_MACH_LONGCHEER) || defined(CONFIG_MACH_XIAOMI_JASON) || defined(CONFIG_MACH_XIAOMI_LAVENDER)
 #include <linux/thermal.h>
 #endif
 #include "fg-core.h"
@@ -653,7 +653,7 @@ static int fg_get_battery_temp(struct fg_chip *chip, int *val)
 {
 	int rc = 0, temp;
 	u8 buf[2];
-#if defined(CONFIG_MACH_XIAOMI_TULIP) || defined(CONFIG_MACH_XIAOMI_JASON)
+#if defined(CONFIG_MACH_XIAOMI_TULIP) || defined(CONFIG_MACH_XIAOMI_JASON) || defined(CONFIG_MACH_XIAOMI_LAVENDER)
 	struct thermal_zone_device *quiet_them;
 #endif
 	rc = fg_read(chip, BATT_INFO_BATT_TEMP_LSB(chip), buf, 2);
@@ -730,11 +730,15 @@ static int fg_get_battery_temp(struct fg_chip *chip, int *val)
 #endif
 #endif
 
-#if defined(CONFIG_MACH_XIAOMI_JASON)
+#if defined(CONFIG_MACH_XIAOMI_JASON) || defined(CONFIG_MACH_XIAOMI_LAVENDER)
        quiet_them = thermal_zone_get_zone_by_name("quiet_therm");
        if (quiet_them)
                rc = thermal_zone_get_temp(quiet_them, &temp);
+#ifdef CONFIG_MACH_XIAOMI_LAVENDER
+       temp = (temp - 3) * 10;
+#else
        temp = temp * 10;
+#endif
 #endif
 
 	*val = temp;
