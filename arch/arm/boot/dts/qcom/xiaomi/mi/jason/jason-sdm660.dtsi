@@ -1,6 +1,20 @@
 #include "jason-sdm660-mdss-panels.dtsi"
 #include "jason-camera-sensor.dtsi"
 
+/* Red led was used for powersupply of White led */
+&red_led {
+    linux,name = "white";
+    qcom,duty-ms = <20>;
+    qcom,start-idx = <1>;
+    qcom,idx-len = <11>;
+    qcom,duty-pcts = [00 05 0a 0f 14 1d 28 32 3c 4b 64];
+    qcom,lut-flags = <0x1f>;
+    qcom,ramp-step-ms = <100>;
+    qcom,pause-lo = <2000>;
+    qcom,pause-hi = <1000>;
+    qcom,use-blink;
+};
+
 &pm660_charger {
 	qcom,usb-icl-ua = <2800000>;
 	qcom,fcc-max-ua = <3300000>;
