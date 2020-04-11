@@ -5706,65 +5706,18 @@ static void soc_work_fn(struct work_struct *work)
 {	struct fg_chip *chip = container_of(work,
 				struct fg_chip,
 				soc_work.work);
-	int msoc = 0, esr_uohms = 0, curr_ua = 0, volt_uv = 0, temp = 0;
-	int soc = 0;
-	int cycle_count = 0;
-	int rc;
-	u8 buf_top[4], buf_auto[4], buf_profile[4];
+	int soc = 0, temp = 0, rc;
 	static int prev_soc = -EINVAL;
 
 	rc = fg_get_prop_capacity(chip, &soc);
 	if (rc < 0)
 		pr_err("Error in getting capacity, rc=%d\n", rc);
 
-	rc = fg_get_msoc_raw(chip, &msoc);
-	if (rc < 0)
-		pr_err("Error in getting msoc, rc=%d\n", rc);
-
-	rc = fg_get_sram_prop(chip, FG_SRAM_ESR, &esr_uohms);
-	if (rc < 0)
-		pr_err("failed to get ESR, rc=%d\n", rc);
-
-	fg_get_battery_current(chip, &curr_ua);
-	if (rc < 0)
-		pr_err("failed to get current, rc=%d\n", rc);
-
-	rc = fg_get_battery_voltage(chip, &volt_uv);
-	if (rc < 0)
-		pr_err("failed to get voltage, rc=%d\n", rc);
-
 	rc = fg_get_battery_temp(chip, &temp);
 	if (rc < 0)
 		pr_err("failed to get temp, rc=%d\n", rc);
 
-	cycle_count = fg_get_cycle_count(chip);
-
-	rc = fg_sram_read(chip, 0, 0, buf_top, 4, FG_IMA_DEFAULT);
-	if (rc < 0) {
-		pr_err("sram read failed: address=0, rc=%d\n", rc);
-		return;
-	}
-	rc = fg_sram_read(chip, 19, 0, buf_auto, 4, FG_IMA_DEFAULT);
-	if (rc < 0) {
-		pr_err("sram read failed: address=19, rc=%d\n", rc);
-		return;
-	}
-	rc = fg_sram_read(chip, PROFILE_INTEGRITY_WORD, 0, buf_profile, 4, FG_IMA_DEFAULT);
-	if (rc < 0) {
-		pr_err("sram read failed: address=79, rc=%d\n", rc);
-		return;
-	}
-	pr_info("adjust_soc: s %d r %d i %d v %d t %d cc %d m 0x%02x\n",
-			soc,
-			esr_uohms,
-			curr_ua,
-			volt_uv,
-			temp,
-			cycle_count,
-			msoc);
-	pr_info("adjust_soc: 000: %02x, %02x, %02x, %02x\n", buf_top[0], buf_top[1], buf_top[2], buf_top[3]);
-	pr_info("adjust_soc: 019: %02x, %02x, %02x, %02x\n", buf_auto[0], buf_auto[1], buf_auto[2], buf_auto[3]);
-	pr_info("adjust_soc: 079: %02x, %02x, %02x, %02x\n", buf_profile[0], buf_profile[1], buf_profile[2], buf_profile[3]);
+	pr_info("soc: %d temp: %d\n", soc, temp/10);
 
 	/* if soc changes, report power supply change uevent */
 	if (soc != prev_soc) {
