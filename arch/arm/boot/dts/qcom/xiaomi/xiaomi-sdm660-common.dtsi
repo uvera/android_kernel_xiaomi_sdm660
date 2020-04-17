@@ -2,11 +2,11 @@
 &red_led {
     linux,name = "white";
     qcom,duty-ms = <20>;
-    qcom,start-idx = <1>;
-    qcom,idx-len = <11>;
-    qcom,duty-pcts = [00 05 0a 0f 14 1d 28 32 3c 4b 64];
+    qcom,start-idx = <0>;
+    qcom,idx-len = <24>;
+    qcom,duty-pcts = [01 0a 14 1e 28 32 3c 46 50 5a 64 96 c8 fa 96 5a 50 46 3c 32 28 1e 14 0a];
     qcom,lut-flags = <0x1f>;
-    qcom,ramp-step-ms = <100>;
-    qcom,pause-lo = <2000>;
-    qcom,pause-hi = <1000>;
+    qcom,ramp-step-ms = <110>;
+    qcom,pause-lo = <1750>;
+    qcom,pause-hi = <750>;
 };
