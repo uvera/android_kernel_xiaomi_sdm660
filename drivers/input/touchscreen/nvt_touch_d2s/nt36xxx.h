@@ -26,8 +26,6 @@
 #include <linux/earlysuspend.h>
 #endif
 
-#include <linux/pm_qos.h>
-
 
 #define NVTTOUCH_INT_PIN 943
 
@@ -133,7 +131,6 @@ struct nvt_ts_data {
 	const struct nvt_ts_mem_map *mmap;
 	uint8_t carrier_system;
 	uint16_t nvt_pid;
-	struct pm_qos_request pm_qos_req;
 };
 
 #if NVT_TOUCH_PROC
