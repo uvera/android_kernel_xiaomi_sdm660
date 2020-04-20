@@ -121,7 +121,7 @@ static int mmc_cmdq_thread(void *d)
 
 	struct sched_param scheduler_params = {0};
 
-	scheduler_params.sched_priority = 1;
+	scheduler_params.sched_priority = 2;
 
 	sched_setscheduler(current, SCHED_RR, &scheduler_params);
 
@@ -155,7 +155,7 @@ static int mmc_queue_thread(void *d)
 	struct mmc_card *card = mq->card;
 	struct sched_param scheduler_params = {0};
 
-	scheduler_params.sched_priority = 1;
+	scheduler_params.sched_priority = 2;
 
 	sched_setscheduler(current, SCHED_RR, &scheduler_params);
 
