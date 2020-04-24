@@ -753,3 +753,9 @@ config PROCESS_RECLAIM
 	 (addr, addr + size-bytes) of the process.
 
 	 Any other vaule is ignored.
+
+config VM_DIRTY_RATIO
+	int "Dirty ratio percentage"
+	default 20
+	help
+	 Allows to change dirty ratio percentage value
