@@ -297,3 +297,9 @@ config BLOCK_UNWANTED_FILES
 	bool "Allow blocking files from executing from kernel"
 	help
 	  This option allows you to make files from certain folders un-openable.
+
+config VFS_CACHE_PRESSURE
+	int "Configure vfs cache pressure"
+	default 100
+	help
+	 This option allows you to adjust vfs cache pressure.
